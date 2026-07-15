@@ -3,8 +3,8 @@ import '../models/collar.dart';
 
 class EspCommService {
   final _rand = Random();
-  double _baseLat = 27.7089;
-  double _baseLon = 85.3206;
+  final double _baseLat = 27.7089;
+  final double _baseLon = 85.3206;
 
   // Simulates polling http://192.168.4.1/data
   // Swap this out for a real http.get() call in Step 4.
