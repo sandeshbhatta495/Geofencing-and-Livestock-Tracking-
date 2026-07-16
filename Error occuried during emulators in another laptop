@@ -27,3 +27,6 @@ BUILD FAILED in 9s
 Error: Gradle task assembleDebug failed with exit code 1
 
 Exited (1).
+
+# newer error 
+Project android: A problem occurred configuring root project 'sqflite'. A problem occurred evaluating root project 'sqflite'. Failed to apply plugin 'com.android.internal.version-check'. Minimum supported Gradle version is 8.13. Current version is 7.5.: A problem occurred configuring root project 'sqflite'. A problem occurred evaluating root project 'sqflite'. Failed to apply plugin 'com.android.internal.version-check'. Minimum supported Gradle version is 8.13. Current version is 7.5. Try updating the 'distributionUrl' property in C:\Users\L O Q\AppData\Local\Pub\Cache\hosted\pub.dev\sqflite_android-2.4.3\android\gradle\wrapper\gradle-wrapper.properties to 'gradle-8.13-bin.zip'.
