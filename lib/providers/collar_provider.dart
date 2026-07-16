@@ -11,4 +11,4 @@ final collarStreamProvider = StreamProvider<List<Collar>>((ref) async* {
     yield await service.fetchCollars();
     await Future.delayed(const Duration(seconds: 3));
   }
-});
+});   
