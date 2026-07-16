@@ -1,33 +1,21 @@
-import 'dart:math';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/collar.dart';
 
 class EspCommService {
-  final _rand = Random();
-  final double _baseLat = 27.7089;
-  final double _baseLon = 85.3206;
+  // ESP32 SoftAP default gateway IP — change if yours differs
+  static const String _baseUrl = 'http://192.168.4.1/data';
 
-  // Simulates polling http://192.168.4.1/data
-  // Swap this out for a real http.get() call in Step 4.
   Future<List<Collar>> fetchCollars() async {
-    await Future.delayed(const Duration(milliseconds: 300)); // simulate network delay
+    final response = await http
+        .get(Uri.parse(_baseUrl))
+        .timeout(const Duration(seconds: 5));
 
-    return [
-      Collar(
-        id: 'C1',
-        lat: _baseLat + (_rand.nextDouble() - 0.5) * 0.002,
-        lon: _baseLon + (_rand.nextDouble() - 0.5) * 0.002,
-        battery: 70 + _rand.nextInt(30),
-        rssi: -90 + _rand.nextInt(20),
-        lastSeen: DateTime.now(),
-      ),
-      Collar(
-        id: 'C2',
-        lat: _baseLat + (_rand.nextDouble() - 0.5) * 0.002,
-        lon: _baseLon + (_rand.nextDouble() - 0.5) * 0.002,
-        battery: 60 + _rand.nextInt(30),
-        rssi: -90 + _rand.nextInt(20),
-        lastSeen: DateTime.now(),
-      ),
-    ];
+    if (response.statusCode != 200) {
+      throw Exception('ESP32 returned ${response.statusCode}');
+    }
+
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((j) => Collar.fromJson(j as Map<String, dynamic>)).toList();
   }
 }

@@ -23,6 +23,7 @@ class MbTilesTileProvider extends TileProvider {
 
   Database? _database;
   Future<Database>? _openingDatabase;
+  Directory? _tempDirectory;
 
   /// Returns an image provider that knows how to fetch the tile bytes for the
   /// requested zoom/x/y position.
@@ -76,20 +77,24 @@ class MbTilesTileProvider extends TileProvider {
     return _openingDatabase ??= _loadDatabase();
   }
 
-  /// Copies the bundled asset to a temporary SQLite file and opens it in
-  /// read-only mode.
+  /// Copies the bundled asset to a persistent app-support file (only if it
+  /// isn't already there) and opens it in read-only mode.
   Future<Database> _loadDatabase() async {
-    final byteData = await rootBundle.load(assetPath);
     final tempDirectory = await Directory.systemTemp.createTemp(
       'livestock_tracker_mbtiles_',
     );
-    final databaseFile = File(p.join(tempDirectory.path, p.basename(assetPath)));
-    final bytes = byteData.buffer.asUint8List(
-      byteData.offsetInBytes,
-      byteData.lengthInBytes,
-    );
+    _tempDirectory = tempDirectory;
 
-    await databaseFile.writeAsBytes(bytes, flush: true);
+    final databaseFile = File(p.join(tempDirectory.path, p.basename(assetPath)));
+
+    if (!await databaseFile.exists()) {
+      final byteData = await rootBundle.load(assetPath);
+      final bytes = byteData.buffer.asUint8List(
+        byteData.offsetInBytes,
+        byteData.lengthInBytes,
+      );
+      await databaseFile.writeAsBytes(bytes, flush: true);
+    }
 
     final database = await _databaseFactory.openDatabase(
       databaseFile.path,
@@ -103,10 +108,12 @@ class MbTilesTileProvider extends TileProvider {
     return database;
   }
 
-  /// Closes the opened database when the tile layer is disposed.
+  /// Closes the opened database and removes the temp copy when the tile
+  /// layer is disposed.
   @override
   void dispose() {
     _database?.close();
+    _tempDirectory?.delete(recursive: true).ignore();
   }
 }
 
@@ -172,73 +179,15 @@ class _MbTilesImageProvider extends ImageProvider<_MbTilesImageProvider> {
   /// when the view extends beyond the sparse offline bundle.
   Future<Codec> _decodeTransparentTile(ImageDecoderCallback decode) async {
     const transparentPngBytes = <int>[
-      0x89,
-      0x50,
-      0x4E,
-      0x47,
-      0x0D,
-      0x0A,
-      0x1A,
-      0x0A,
-      0x00,
-      0x00,
-      0x00,
-      0x0D,
-      0x49,
-      0x48,
-      0x44,
-      0x52,
-      0x00,
-      0x00,
-      0x00,
-      0x01,
-      0x00,
-      0x00,
-      0x00,
-      0x01,
-      0x08,
-      0x06,
-      0x00,
-      0x00,
-      0x00,
-      0x1F,
-      0x15,
-      0xC4,
-      0x89,
-      0x00,
-      0x00,
-      0x00,
-      0x0A,
-      0x49,
-      0x44,
-      0x41,
-      0x54,
-      0x78,
-      0x9C,
-      0x63,
-      0x00,
-      0x01,
-      0x00,
-      0x00,
-      0x05,
-      0x00,
-      0x01,
-      0x0D,
-      0x0A,
-      0x2D,
-      0xB4,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x49,
-      0x45,
-      0x4E,
-      0x44,
-      0xAE,
-      0x42,
-      0x60,
-      0x82,
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+      0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
+      0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+      0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+      0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+      0x42, 0x60, 0x82,
     ];
 
     final buffer = await ImmutableBuffer.fromUint8List(

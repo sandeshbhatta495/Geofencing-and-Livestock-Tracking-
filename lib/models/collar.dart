@@ -6,6 +6,8 @@ class Collar {
   final int rssi;
   final DateTime lastSeen;
 
+  bool get isConnected => DateTime.now().difference(lastSeen) <= const Duration(minutes: 5);
+
   Collar({
     required this.id,
     required this.lat,
